@@ -16,13 +16,7 @@ return {
           filetypes = { "html", "twig", "html.twig" },
         },
         emmet_ls = {
-          filetypes = { "html", "twig", "html.twig", "blade.php" },
-        },
-        twiggy_language_server = {
-          filetypes = { "twig", "html.twig" },
-        },
-        laravel_ls = {
-          filetypes = { "php", "blade.php", "blade" },
+          filetypes = { "html", "twig", "html.twig" },
         },
         intelephense = {
           settings = {
