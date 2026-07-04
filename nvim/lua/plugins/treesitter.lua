@@ -4,8 +4,8 @@ return {
     opts = {
       ensure_installed = {
         "twig",
-        "blade",
-        "vue",
+        -- "blade",
+        -- "vue",
       },
     },
   },

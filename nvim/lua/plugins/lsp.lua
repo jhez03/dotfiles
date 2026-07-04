@@ -21,7 +21,7 @@ return {
         intelephense = {
           settings = {
             intelephense = {
-              licenceKey = vim.fn.readfile(vim.fn.expand("~/.config/intelephense/license.txt"))[1],
+              -- licenceKey = vim.fn.readfile(vim.fn.expand("~/.config/intelephense/license.txt"))[1],
               inlayHints = { enable = false },
             },
           },
