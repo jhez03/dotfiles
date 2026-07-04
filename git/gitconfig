@@ -1,0 +1,8 @@
+[pull]
+	rebase = false
+
+# Machine/identity-specific settings (user.name, user.email, safe.directory, etc.)
+# live in ~/.gitconfig.local, which is NOT part of this repo. Git silently skips
+# the include below if that file doesn't exist yet.
+[include]
+	path = ~/.gitconfig.local

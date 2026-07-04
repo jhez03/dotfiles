@@ -6,6 +6,7 @@ DOTFILES="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # 1. Symlink configs into standard locations ------------------------------------
 mkdir -p "$HOME/.config" "$HOME/.config/tmux" "$HOME/.config/lazygit"
+ln -sfn "$DOTFILES/git/gitconfig" "$HOME/.gitconfig"
 ln -sfn "$DOTFILES/nvim" "$HOME/.config/nvim"
 ln -sfn "$DOTFILES/tmux/tmux.conf" "$HOME/.config/tmux/tmux.conf"
 #tmux.conf sources ~/.tmux.conf and loads TPM from ~/.tmux/plugins/tpm,
