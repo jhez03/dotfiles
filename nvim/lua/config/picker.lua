@@ -97,6 +97,10 @@ local function default_filter(items, query, format)
 	return out
 end
 
+-- exposed so callers can fuzzy-filter a freshly-computed list themselves
+-- (e.g. a buffer list that must be re-enumerated after a delete action)
+M.filter = default_filter
+
 local function get_query()
 	local line = vim.api.nvim_buf_get_lines(state.prompt_buf, 0, 1, false)[1] or ""
 	return line:sub(#PROMPT + 1)
@@ -131,6 +135,8 @@ end
 ---   get_items(query)  OR: compute the list fresh per query (e.g. shelling out to rg)
 ---   format(item)  -> display string (default: tostring)
 ---   on_submit(ctx) ctx = { query, item (currently highlighted, may be nil), items }
+---   actions        map of lhs -> function(ctx); runs in place and refreshes the
+---                   list afterwards (picker stays open) — e.g. delete-buffer on <C-d>
 function M.open(opts)
 	close()
 
@@ -198,6 +204,16 @@ function M.open(opts)
 		move(-1)
 	end, map_opts)
 	vim.keymap.set({ "i", "n" }, "<Esc>", close, map_opts)
+
+	if opts.actions then
+		for lhs, fn in pairs(opts.actions) do
+			vim.keymap.set({ "i", "n" }, lhs, function()
+				local ctx = { query = get_query(), item = state.items[state.selected], items = state.items }
+				fn(ctx)
+				refresh()
+			end, map_opts)
+		end
+	end
 
 	if opts.get_items then
 		vim.api.nvim_create_autocmd("TextChangedI", {

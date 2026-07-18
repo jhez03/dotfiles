@@ -39,6 +39,8 @@ Leader is `<Space>`.
 | `<leader>ff` | Find files — floating picker, fuzzy-filters live as you type |
 | `<leader>sg` | Grep search — floating picker, live results from `rg` as you type; `<CR>` jumps to match |
 | `<leader>sr` | Search & replace — same live picker shows every file/line that matches, `<CR>` then prompts for replacement and applies it across all of them |
+| `<leader>fb` | Buffer picker — fuzzy-filter open buffers, `<CR>` switches, `<C-d>` deletes the highlighted buffer without closing the picker |
+| `<leader>fd` | Floating directory browser (netrw) for the current file's directory — `mf` mark, `mc` copy marked, `mm` move marked, `R` rename, `D` delete, `%`/`d` new file/directory, `-` up a directory |
 | `<C-j>`/`<C-k>` or `<Up>`/`<Down>` (in picker) | Move selection |
 | `<Esc>` (in picker) | Cancel |
 | `<leader>fn` | New file |

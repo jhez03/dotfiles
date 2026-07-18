@@ -2,6 +2,21 @@ vim.g.mapleader = " "
 vim.g.maplocalleader = " "
 
 local map = vim.keymap.set
+local picker = require("config.picker")
+
+local function centered_win_opts(wratio, hratio)
+	local width = math.floor(vim.o.columns * wratio)
+	local height = math.floor(vim.o.lines * hratio)
+	return {
+		relative = "editor",
+		width = width,
+		height = height,
+		row = math.floor((vim.o.lines - height) / 2),
+		col = math.floor((vim.o.columns - width) / 2),
+		style = "minimal",
+		border = "rounded",
+	}
+end
 
 -- ============================================================================
 -- MOVEMENT
@@ -42,6 +57,49 @@ map("n", "<S-l>", "<cmd>bnext<cr>", { desc = "Next buffer" })
 map("n", "<S-h>", "<cmd>bprevious<cr>", { desc = "Previous buffer" })
 map("n", "<leader>bd", "<cmd>bdelete<cr>", { desc = "Delete buffer" })
 
+local function list_buffers()
+	local bufs = {}
+	for _, b in ipairs(vim.api.nvim_list_bufs()) do
+		if vim.api.nvim_buf_is_valid(b) and vim.bo[b].buflisted then
+			local name = vim.api.nvim_buf_get_name(b)
+			table.insert(bufs, { bufnr = b, name = name ~= "" and vim.fn.fnamemodify(name, ":~:.") or "[No Name]" })
+		end
+	end
+	return bufs
+end
+
+local function format_buffer(item)
+	local modified = vim.bo[item.bufnr].modified and " [+]" or ""
+	return string.format("%d: %s%s", item.bufnr, item.name, modified)
+end
+
+map("n", "<leader>fb", function()
+	picker.open({
+		prompt = "Buffers (<C-d> delete)",
+		get_items = function(query)
+			return picker.filter(list_buffers(), query, format_buffer)
+		end,
+		format = format_buffer,
+		on_submit = function(ctx)
+			if ctx.item then
+				vim.cmd("buffer " .. ctx.item.bufnr)
+			end
+		end,
+		actions = {
+			["<C-d>"] = function(ctx)
+				if not ctx.item then
+					return
+				end
+				if vim.bo[ctx.item.bufnr].modified then
+					vim.notify("Buffer has unsaved changes: " .. ctx.item.name, vim.log.levels.WARN)
+					return
+				end
+				vim.api.nvim_buf_delete(ctx.item.bufnr, {})
+			end,
+		},
+	})
+end, { desc = "Find/delete buffers" })
+
 -- ============================================================================
 -- EDITING
 -- ============================================================================
@@ -68,11 +126,31 @@ map({ "n", "i", "v" }, "<C-s>", "<cmd>w<cr>", { desc = "Save file" })
 map("n", "<leader>qq", "<cmd>qa<cr>", { desc = "Quit all" })
 map("n", "<leader>e", "<cmd>Lexplore<cr>", { desc = "Toggle file explorer" })
 
+-- Floating directory browser (built-in netrw, no plugin). netrw already has
+-- copy/move/rename/delete: mf mark, mc copy marked, mm move marked, R rename,
+-- D delete, % new file, d new directory, - up a directory.
+local dir_explorer_state = { win = nil }
+
+map("n", "<leader>fd", function()
+	if dir_explorer_state.win and vim.api.nvim_win_is_valid(dir_explorer_state.win) then
+		vim.api.nvim_win_close(dir_explorer_state.win, true)
+		dir_explorer_state.win = nil
+		return
+	end
+
+	local dir = vim.fn.expand("%:p:h")
+	if dir == "" then
+		dir = vim.fn.getcwd()
+	end
+
+	local buf = vim.api.nvim_create_buf(false, true)
+	dir_explorer_state.win = vim.api.nvim_open_win(buf, true, centered_win_opts(0.8, 0.8))
+	vim.cmd("edit " .. vim.fn.fnameescape(dir))
+end, { desc = "Browse directory (mf/mc/mm copy-move, R rename, D delete)" })
+
 -- ============================================================================
 -- SEARCH (floating picker: live filtered list as you type, no plugin)
 -- ============================================================================
-local picker = require("config.picker")
-
 local function list_files()
 	local cmd = vim.fn.executable("rg") == 1 and { "rg", "--files", "--hidden", "--glob", "!.git" }
 		or { "find", ".", "-type", "f", "-not", "-path", "*/.git/*" }
@@ -197,20 +275,6 @@ end, { desc = "Diagnostic location list" })
 -- ============================================================================
 -- FLOATING TERMINAL (core nvim_open_win + termopen, no plugin)
 -- ============================================================================
-local function centered_win_opts(wratio, hratio)
-	local width = math.floor(vim.o.columns * wratio)
-	local height = math.floor(vim.o.lines * hratio)
-	return {
-		relative = "editor",
-		width = width,
-		height = height,
-		row = math.floor((vim.o.lines - height) / 2),
-		col = math.floor((vim.o.columns - width) / 2),
-		style = "minimal",
-		border = "rounded",
-	}
-end
-
 local terminal_state = { buf = nil, win = nil }
 
 local function toggle_floating_terminal()
