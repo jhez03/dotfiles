@@ -8,6 +8,7 @@ defaults.
 
 - Neovim (built-in only for everything except grep search)
 - `ripgrep` (`rg`) — required for `<leader>sg`/`<leader>sr`; `<leader>ff` falls back to `find` if `rg` isn't installed
+- `lazygit` — required for `<leader>gg`
 
 ## Structure
 
@@ -47,6 +48,7 @@ Leader is `<Space>`.
 | `<leader>cd` | Line diagnostics float |
 | `<leader>xq` | Diagnostic location list |
 | `<leader>ft` | Toggle floating terminal |
+| `<leader>gg` | Open lazygit (floating terminal, closes automatically on quit) |
 | `<Esc>` (terminal mode) | Back to normal mode |
 | `<Esc>` (normal mode) | Clear search highlight |
 

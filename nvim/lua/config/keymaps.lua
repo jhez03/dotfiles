@@ -197,6 +197,20 @@ end, { desc = "Diagnostic location list" })
 -- ============================================================================
 -- FLOATING TERMINAL (core nvim_open_win + termopen, no plugin)
 -- ============================================================================
+local function centered_win_opts(wratio, hratio)
+	local width = math.floor(vim.o.columns * wratio)
+	local height = math.floor(vim.o.lines * hratio)
+	return {
+		relative = "editor",
+		width = width,
+		height = height,
+		row = math.floor((vim.o.lines - height) / 2),
+		col = math.floor((vim.o.columns - width) / 2),
+		style = "minimal",
+		border = "rounded",
+	}
+end
+
 local terminal_state = { buf = nil, win = nil }
 
 local function toggle_floating_terminal()
@@ -210,17 +224,7 @@ local function toggle_floating_terminal()
 		terminal_state.buf = vim.api.nvim_create_buf(false, true)
 	end
 
-	local width = math.floor(vim.o.columns * 0.8)
-	local height = math.floor(vim.o.lines * 0.8)
-	terminal_state.win = vim.api.nvim_open_win(terminal_state.buf, true, {
-		relative = "editor",
-		width = width,
-		height = height,
-		row = math.floor((vim.o.lines - height) / 2),
-		col = math.floor((vim.o.columns - width) / 2),
-		style = "minimal",
-		border = "rounded",
-	})
+	terminal_state.win = vim.api.nvim_open_win(terminal_state.buf, true, centered_win_opts(0.8, 0.8))
 
 	if vim.bo[terminal_state.buf].buftype ~= "terminal" then
 		vim.fn.termopen(os.getenv("SHELL"))
@@ -230,3 +234,43 @@ end
 
 map("n", "<leader>ft", toggle_floating_terminal, { desc = "Toggle floating terminal" })
 map("t", "<Esc>", "<C-\\><C-n>", { desc = "Terminal normal mode" })
+
+-- ============================================================================
+-- LAZYGIT (floating terminal running the lazygit CLI, no plugin)
+-- ============================================================================
+local lazygit_state = { buf = nil, win = nil }
+
+local function toggle_lazygit()
+	if vim.fn.executable("lazygit") == 0 then
+		vim.notify("lazygit executable not found on $PATH", vim.log.levels.ERROR)
+		return
+	end
+
+	if lazygit_state.win and vim.api.nvim_win_is_valid(lazygit_state.win) then
+		vim.api.nvim_win_close(lazygit_state.win, true)
+		lazygit_state.win = nil
+		return
+	end
+
+	if not lazygit_state.buf or not vim.api.nvim_buf_is_valid(lazygit_state.buf) then
+		lazygit_state.buf = vim.api.nvim_create_buf(false, true)
+	end
+
+	lazygit_state.win = vim.api.nvim_open_win(lazygit_state.buf, true, centered_win_opts(0.9, 0.9))
+
+	if vim.bo[lazygit_state.buf].buftype ~= "terminal" then
+		vim.fn.termopen("lazygit", {
+			on_exit = function()
+				vim.schedule(function()
+					if lazygit_state.win and vim.api.nvim_win_is_valid(lazygit_state.win) then
+						vim.api.nvim_win_close(lazygit_state.win, true)
+					end
+					lazygit_state.win, lazygit_state.buf = nil, nil
+				end)
+			end,
+		})
+	end
+	vim.cmd("startinsert")
+end
+
+map("n", "<leader>gg", toggle_lazygit, { desc = "Open lazygit" })
