@@ -1,83 +1,48 @@
-# nvim-lite
+# nvim (minimal, no plugins)
 
-A powerful but tastefully minimal Neovim configuration in a single file. No plugin manager. No bloat.
-
-*Author: Radley E. Sidwell-Lewis*
+A from-scratch Neovim config with no plugin manager and no plugins — just
+built-in `vim.opt`/`vim.keymap`/`vim.api`, with keymaps modeled after LazyVim's
+defaults.
 
 ## Requirements
 
-- Neovim `0.12` or later
-- A [Nerd Font](https://www.nerdfonts.com/) (FiraCode Nerd Font recommended)
-- `git`, `ripgrep`, `fzf`, `fd`
-- `go` (for `efm-langserver`)
+- Neovim (built-in only, no external tools required)
 
-## Installation
+## Structure
 
-```bash
-mkdir -p ~/.config/nvim && curl -fsSL https://raw.githubusercontent.com/radleylewis/nvim-lite/main/init.lua -o ~/.config/nvim/init.lua
 ```
-
-> **Note:** If you already have a Neovim config, back it up first.
-
-## Dependencies
-
-**Neovim `0.12`** and the **Treesitter CLI**:
-
-```bash
-sudo pacman -S neovim tree-sitter-cli
+init.lua               -- bootstraps the three modules below
+lua/config/options.lua -- vim.opt settings
+lua/config/keymaps.lua -- keymaps
+lua/config/autocmds.lua-- autocommands
 ```
-
-**Go** (required by `efm-langserver` for linting and formatting):
-
-```bash
-sudo pacman -S go
-```
-
-**LuaSnip** (native C dependency for snippet expansion):
-
-```bash
-sudo pacman -S lua-jsregexp
-```
-
-**General utilities:**
-
-```bash
-sudo pacman -S git ripgrep fzf fd
-```
-
-**LSP servers** are managed via [Mason](https://github.com/mason-org/mason.nvim). On first launch, open Neovim and run `:Mason` to install the servers you need.
-
-> **Note:** `rust_analyzer` is managed automatically by `rustaceanvim` via `rustup`. Install it with `rustup component add rust-analyzer` rather than through Mason.
-
-## Features
-
-- Single `init.lua` — no plugin manager, uses Neovim's native `vim.pack`
-- Treesitter syntax highlighting and folding
-- LSP via `nvim-lspconfig` with `blink.cmp` for completion
-- Linting and formatting via `efm-langserver`
-- Rust support via `rustaceanvim`
-- Fuzzy finding via `fzf-lua`
-- File tree via `nvim-tree`
-- Git integration via `mini.diff` and `mini.git`
-- Floating terminal (`<leader>t`)
-- Obsidian note-taking support (optional, requires `~/Documents/Notes/`)
-- Custom statusline with mode, branch, filetype and file size indicators
-- Transparent background
 
 ## Keymaps
 
+Leader is `<Space>`.
+
 | Key | Action |
 |-----|--------|
-| `<leader>e` | Toggle file tree |
-| `<leader>ff` | Find files |
-| `<leader>fg` | Live grep |
-| `<leader>fb` | Buffers |
-| `<leader>t` | Toggle floating terminal |
-| `<leader>gd` | Go to definition |
-| `<leader>ca` | Code action |
-| `<leader>rn` | Rename symbol |
-| `K` | Hover documentation |
-| `]h` / `[h` | Next / previous git hunk |
-| `<leader>hs` | Stage hunk |
-| `<leader>hb` | Git blame |
-| `<C-q>` | Close floating terminal |
+| `<C-h/j/k/l>` | Move between windows |
+| `<S-h>` / `<S-l>` | Previous / next buffer |
+| `<leader>bd` | Delete buffer |
+| `<leader>sv` / `<leader>sh` | Split window vertically / horizontally |
+| `<C-Up/Down/Left/Right>` | Resize window |
+| `<A-j>` / `<A-k>` | Move line/selection down / up |
+| `<leader>x` | Delete without yanking |
+| `<leader>p` (visual) | Paste without yanking |
+| `<leader>fn` | New file |
+| `<C-s>` | Save file |
+| `<leader>qq` | Quit all |
+| `]d` / `[d` | Next / previous diagnostic |
+| `<leader>cd` | Line diagnostics float |
+| `<leader>xq` | Diagnostic location list |
+| `<leader>ft` | Toggle floating terminal |
+| `<Esc>` (terminal mode) | Back to normal mode |
+| `<Esc>` (normal mode) | Clear search highlight |
+
+## Adding plugins later
+
+Neovim 0.12+ ships with a built-in plugin manager (`vim.pack.add`). Nothing
+here depends on plugins, so they can be layered on top without touching
+`options.lua`/`keymaps.lua`/`autocmds.lua`.
