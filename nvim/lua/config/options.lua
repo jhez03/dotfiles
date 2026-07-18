@@ -60,3 +60,27 @@ vim.opt.timeoutlen = 500
 
 -- Native omnifunc completion works without any completion plugin (<C-x><C-o>)
 vim.opt.completeopt = "menu,menuone,noselect"
+
+-- ============================================================================
+-- FILE / GREP SEARCH (built-in :find and :grep, no fuzzy-finder plugin)
+-- ============================================================================
+vim.opt.path:append("**") -- recursive search for :find
+vim.opt.wildmenu = true
+vim.opt.wildmode = "longest:full,full" -- tab-complete like a fuzzy picker
+vim.opt.wildignore:append({ ".git/*", "node_modules/*", "*.o", "*.pyc" })
+
+-- Prefer ripgrep for :grep if it's on $PATH; otherwise falls back to the
+-- system default grepprg (still works, just slower / no --hidden support).
+if vim.fn.executable("rg") == 1 then
+	vim.opt.grepprg = "rg --vimgrep --smart-case --hidden --glob '!.git'"
+	vim.opt.grepformat = "%f:%l:%c:%m"
+end
+
+-- ============================================================================
+-- FILE EXPLORER (built-in netrw, used as a tree sidebar via :Lexplore)
+-- ============================================================================
+vim.g.netrw_banner = 0 -- no help banner
+vim.g.netrw_liststyle = 3 -- tree view
+vim.g.netrw_winsize = 25 -- sidebar width (% of editor)
+vim.g.netrw_browse_split = 0 -- open files in the previous window
+vim.g.netrw_altv = 1 -- open splits to the right

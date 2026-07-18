@@ -6,7 +6,8 @@ defaults.
 
 ## Requirements
 
-- Neovim (built-in only, no external tools required)
+- Neovim (built-in only for everything except grep search)
+- `ripgrep` (`rg`) optional — used by `<leader>sg`/`<leader>sr` if present, otherwise falls back to system `grep` (slower, no `--hidden`)
 
 ## Structure
 
@@ -29,8 +30,13 @@ Leader is `<Space>`.
 | `<leader>sv` / `<leader>sh` | Split window vertically / horizontally |
 | `<C-Up/Down/Left/Right>` | Resize window |
 | `<A-j>` / `<A-k>` | Move line/selection down / up |
+| `J` / `K` (visual) | Move selection down / up (overrides default visual `J` join) |
 | `<leader>x` | Delete without yanking |
 | `<leader>p` (visual) | Paste without yanking |
+| `<leader>e` | Toggle file explorer (netrw tree sidebar) |
+| `<leader>ff` | Find files (`:find`, tab-completes via `path=**`) |
+| `<leader>sg` | Grep search into quickfix (uses `rg` if installed) |
+| `<leader>sr` | Search, then replace across every file with a match |
 | `<leader>fn` | New file |
 | `<C-s>` | Save file |
 | `<leader>qq` | Quit all |
