@@ -7,7 +7,7 @@ defaults.
 ## Requirements
 
 - Neovim (built-in only for everything except grep search)
-- `ripgrep` (`rg`) optional — used by `<leader>sg`/`<leader>sr` if present, otherwise falls back to system `grep` (slower, no `--hidden`)
+- `ripgrep` (`rg`) — required for `<leader>sg`/`<leader>sr`; `<leader>ff` falls back to `find` if `rg` isn't installed
 
 ## Structure
 
@@ -16,6 +16,7 @@ init.lua               -- bootstraps the three modules below
 lua/config/options.lua -- vim.opt settings
 lua/config/keymaps.lua -- keymaps
 lua/config/autocmds.lua-- autocommands
+lua/config/picker.lua  -- minimal floating fuzzy picker used by <leader>ff/sg/sr
 ```
 
 ## Keymaps
@@ -34,9 +35,11 @@ Leader is `<Space>`.
 | `<leader>x` | Delete without yanking |
 | `<leader>p` (visual) | Paste without yanking |
 | `<leader>e` | Toggle file explorer (netrw tree sidebar) |
-| `<leader>ff` | Find files (`:find`, tab-completes via `path=**`) |
-| `<leader>sg` | Grep search into quickfix (uses `rg` if installed) |
-| `<leader>sr` | Search, then replace across every file with a match |
+| `<leader>ff` | Find files — floating picker, fuzzy-filters live as you type |
+| `<leader>sg` | Grep search — floating picker, live results from `rg` as you type; `<CR>` jumps to match |
+| `<leader>sr` | Search & replace — same live picker shows every file/line that matches, `<CR>` then prompts for replacement and applies it across all of them |
+| `<C-j>`/`<C-k>` or `<Up>`/`<Down>` (in picker) | Move selection |
+| `<Esc>` (in picker) | Cancel |
 | `<leader>fn` | New file |
 | `<C-s>` | Save file |
 | `<leader>qq` | Quit all |

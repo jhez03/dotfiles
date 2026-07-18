@@ -69,42 +69,116 @@ map("n", "<leader>qq", "<cmd>qa<cr>", { desc = "Quit all" })
 map("n", "<leader>e", "<cmd>Lexplore<cr>", { desc = "Toggle file explorer" })
 
 -- ============================================================================
--- SEARCH (built-in :find / :grep / quickfix, no fuzzy-finder plugin)
+-- SEARCH (floating picker: live filtered list as you type, no plugin)
 -- ============================================================================
-map("n", "<leader>ff", ":find ", { desc = "Find files" })
+local picker = require("config.picker")
 
-local function grep_prompt()
-	vim.ui.input({ prompt = "Grep: " }, function(pattern)
-		if not pattern or pattern == "" then
-			return
-		end
-		vim.cmd("silent! grep! " .. vim.fn.escape(pattern, " \\|\"'"))
-		vim.cmd("copen")
-	end)
+local function list_files()
+	local cmd = vim.fn.executable("rg") == 1 and { "rg", "--files", "--hidden", "--glob", "!.git" }
+		or { "find", ".", "-type", "f", "-not", "-path", "*/.git/*" }
+	local files = vim.fn.systemlist(cmd)
+	for i, f in ipairs(files) do
+		files[i] = f:gsub("^%./", "")
+	end
+	return files
 end
-map("n", "<leader>sg", grep_prompt, { desc = "Grep search (quickfix)" })
 
-local function search_and_replace()
-	vim.ui.input({ prompt = "Search: " }, function(search)
-		if not search or search == "" then
-			return
+map("n", "<leader>ff", function()
+	picker.open({
+		prompt = "Find Files",
+		static_items = list_files(),
+		on_submit = function(ctx)
+			if ctx.item then
+				vim.cmd("edit " .. vim.fn.fnameescape(ctx.item))
+			end
+		end,
+	})
+end, { desc = "Find files" })
+
+local function rg_search(query)
+	if query == "" then
+		return {}
+	end
+	local res = vim
+		.system({ "rg", "--vimgrep", "--smart-case", "--hidden", "--glob", "!.git", "--", query }, { text = true })
+		:wait()
+	if not res or res.code ~= 0 or not res.stdout then
+		return {}
+	end
+	local items = {}
+	for line in res.stdout:gmatch("[^\n]+") do
+		local file, lnum, col, text = line:match("^(.-):(%d+):(%d+):(.*)$")
+		if file then
+			table.insert(items, { file = file, lnum = tonumber(lnum), col = tonumber(col), text = text })
 		end
-		vim.ui.input({ prompt = "Replace with: " }, function(replace)
-			if replace == nil then
+	end
+	return items
+end
+
+local function format_match(item)
+	return string.format("%s:%d: %s", item.file, item.lnum, item.text)
+end
+
+local function require_rg()
+	if vim.fn.executable("rg") == 1 then
+		return true
+	end
+	vim.notify("ripgrep (rg) is required for grep search / search & replace", vim.log.levels.ERROR)
+	return false
+end
+
+map("n", "<leader>sg", function()
+	if not require_rg() then
+		return
+	end
+	picker.open({
+		prompt = "Grep Search",
+		get_items = rg_search,
+		format = format_match,
+		on_submit = function(ctx)
+			if not ctx.item then
 				return
 			end
-			vim.cmd("silent! grep! " .. vim.fn.escape(search, " \\|\"'"))
-			if vim.fn.getqflist({ size = 0 }).size == 0 then
-				vim.notify("No matches found for: " .. search, vim.log.levels.WARN)
+			vim.cmd("edit " .. vim.fn.fnameescape(ctx.item.file))
+			vim.api.nvim_win_set_cursor(0, { ctx.item.lnum, math.max(ctx.item.col - 1, 0) })
+		end,
+	})
+end, { desc = "Grep search" })
+
+map("n", "<leader>sr", function()
+	if not require_rg() then
+		return
+	end
+	picker.open({
+		prompt = "Search & Replace (files shown will be affected)",
+		get_items = rg_search,
+		format = format_match,
+		on_submit = function(ctx)
+			if #ctx.items == 0 then
+				vim.notify("No matches for: " .. ctx.query, vim.log.levels.WARN)
 				return
 			end
-			local pat = vim.fn.escape(search, "/\\")
-			local rep = vim.fn.escape(replace, "/\\")
-			vim.cmd(string.format("cfdo %%s/%s/%s/g | update", pat, rep))
-		end)
-	end)
-end
-map("n", "<leader>sr", search_and_replace, { desc = "Search and replace across files" })
+			vim.ui.input({ prompt = string.format("Replace %q with: ", ctx.query) }, function(replace)
+				if replace == nil then
+					return
+				end
+				local qf_items, files, seen = {}, {}, {}
+				for _, it in ipairs(ctx.items) do
+					table.insert(qf_items, { filename = it.file, lnum = it.lnum, col = it.col, text = it.text })
+					if not seen[it.file] then
+						seen[it.file] = true
+						table.insert(files, it.file)
+					end
+				end
+				vim.fn.setqflist({}, " ", { title = "Search & Replace", items = qf_items })
+				local pat = vim.fn.escape(ctx.query, "/\\")
+				local rep = vim.fn.escape(replace, "/\\")
+				vim.cmd(string.format("silent! cfdo %%s/%s/%s/g | update", pat, rep))
+				vim.notify(string.format("Replaced %q with %q in %d file(s)", ctx.query, replace, #files))
+			end)
+		end,
+	})
+end, { desc = "Search and replace across files" })
 
 -- ============================================================================
 -- DIAGNOSTICS (core vim.diagnostic, works with zero LSP configured)
